@@ -1,0 +1,8 @@
+labels:
+  time:
+    - "Time: <1 Hour"
+    - "Time: <2 Hours"
+    - "Time: <4 Hours"
+    - "Time: <1 Day"
+    - "Time: <1 Week"
+    - "Time: <2 Weeks"
