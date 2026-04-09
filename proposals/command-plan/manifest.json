@@ -1,0 +1,29 @@
+{
+  "name": "command-plan",
+  "description": "Breaks down a spec issue into child issues with labels and parent-child relationships via /plan command",
+  "command": "/plan",
+  "triggers": {
+    "issue_comment": {
+      "created": true
+    }
+  },
+  "configuration": {
+    "type": "object",
+    "properties": {
+      "aiModel": {
+        "type": "string",
+        "description": "LLM model to use for spec breakdown",
+        "default": "gpt-4o"
+      },
+      "maxTasks": {
+        "type": "number",
+        "description": "Maximum number of child issues to create",
+        "default": 10
+      }
+    }
+  },
+  "permissions": {
+    "issues": "write",
+    "metadata": "read"
+  }
+}
