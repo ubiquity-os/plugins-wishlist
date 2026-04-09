@@ -16,7 +16,7 @@ A multi-layered configuration protection mechanism:
 
 Add a `CODEOWNERS` file that restricts review approval on config files to designated admins/billing managers:
 
-```
+```codeowners
 # Config files require admin approval
 /ubiquity.config.*           @ubiquity/admins
 /.github/ubiquity.config.*   @ubiquity/admins
@@ -34,7 +34,7 @@ On `push` events, a UbiquityOS plugin detects whether config files were modified
 2. **Authorization Check:** Verify the pusher has `admin` or `billing_manager` role via the repository collaborator API (`GET /repos/{owner}/{repo}/collaborators/{username}/permission`).
 3. **Automatic Rollback:** If the change is unauthorized, immediately create a new commit restoring the previous config version, authored by `ubiquibot[bot]`.
 
-```
+```text
 Push → Detect config change → Check author role
   ├─ Authorized → Allow, log the change
   └─ Unauthorized → Auto-rollback commit, notify admins
@@ -85,7 +85,7 @@ All config changes (authorized or rolled back) are logged:
 
 ### Event Flow
 
-```
+```text
 GitHub Push Event
   → Plugin receives webhook
   → Check if config files changed (list modified files from commits)
