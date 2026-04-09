@@ -1,0 +1,14 @@
+{
+  "name": "webhook-rewards",
+  "description": "Zero-config plugin that rewards contributors based on GitHub webhook events and timeline activity",
+  "ubiquity:listeners": [
+    "issues.closed",
+    "pull_request.closed",
+    "pull_request.merged"
+  ],
+  "configuration": {
+    "default": {},
+    "type": "object",
+    "properties": {}
+  }
+}
