@@ -6,7 +6,7 @@
 
 ## Problem
 
-Plugin configuration files control money flow, pricing, and reward distribution in UbiquityOS. Currently, any collaborator with write access can modify these configs, creating a fraud risk. Only admins or billing managers should be authorized to change configuration that affects financial operations.
+Plugin configuration files control money flow, pricing, and reward distribution in UbiquityOS. Currently, any collaborator with write access can modify these configs, creating a fraud risk. By default, only admins or billing managers should be authorized to change configuration that affects financial operations, but this can be configured per repository.
 
 ## Proposed Solution
 
