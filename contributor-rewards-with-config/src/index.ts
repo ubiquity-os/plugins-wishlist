@@ -18,7 +18,10 @@ export async function runPlugin(context: Context) {
   }
 
   // Determine if we're in a pull or issue context
-  const isPullContext = "pull_request" in payload;
+  // issue_comment on PRs has payload.issue.pull_request (a truthy object)
+  const payloadAny = payload as Record<string, unknown>;
+  const issueObj = payloadAny.issue as Record<string, unknown> | undefined;
+  const isPullContext = "pull_request" in payload || (issueObj && "pull_request" in issueObj);
   const contextType = isPullContext ? "pull" : "issue";
 
   // Extract relevant data from payload
@@ -39,7 +42,7 @@ export async function runPlugin(context: Context) {
   const contributors = [
     {
       login: sender.login,
-      issueAuthor: issueOrPull.user?.login,
+      issueAuthor: issueOrPull.user?.login === sender.login,
       assignees: issueOrPull.assignees,
       isOrgMember: false, // Would need API call to determine
     },
