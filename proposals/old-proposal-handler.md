@@ -29,7 +29,7 @@ A UbiquityOS plugin (`daemon-old-proposal-handler`) that automates the lifecycle
 
 ### Flow
 
-```
+```text
 Open Issue → Age ≥ staleThreshold?
   No → Skip
   Yes → Already reminded?
