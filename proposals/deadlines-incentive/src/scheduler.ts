@@ -109,9 +109,9 @@ function hoursUntilDeadlineLabel(message: string): string {
 /**
  * Handle deadline expiry.
  */
-async function handleExpiry(ctx: PluginContext, entry: DeadlineEntry): Promise<void> {
+async function handleExpiry(ctx: PluginContext, entry: DeadlineEntry, userConfig?: DeadlineConfig): Promise<void> {
   const { owner, repo, issueNumber, assignee } = entry;
-  const config = DEFAULT_CONFIG;
+  const config = userConfig || DEFAULT_CONFIG;
 
   const body = config.disqualificationEnabled
     ? `❌ **Deadline expired!** @${assignee} has been disqualified from this task.`

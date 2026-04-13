@@ -1,5 +1,5 @@
 import { PluginContext, ActionHandler } from "@ubiquity-os/plugin-sdk";
-import { startDeadlineScheduler, checkDeadlines } from "./scheduler";
+import { startDeadlineScheduler, checkDeadlines, registerDeadline } from "./scheduler";
 
 export interface DeadlineConfig {
   timezone: string;
@@ -150,6 +150,16 @@ export const deadlineHandler: ActionHandler = async (ctx: PluginContext) => {
   await storeDeadlineMetadata(ctx, owner, repo, issueNumber, metadata);
   await applyDeadlineLabels(ctx, owner, repo, issueNumber, deadline);
 
+  // Register with the scheduler for reminders/expiry
+  registerDeadline({
+    owner,
+    repo,
+    issueNumber,
+    deadline,
+    assignedAt: new Date(),
+    assignee,
+  });
+
   ctx.logger.info(`Deadline set for #${issueNumber}: ${deadline.toISOString()}`);
 };
 
@@ -167,6 +177,7 @@ function extractTaskValue(labels: any[]): number {
 
 /**
  * Handle task completion — calculate and post reward.
+ * Reads deadline metadata from issue comments.
  */
 export async function handleCompletion(
   ctx: PluginContext,
@@ -175,15 +186,34 @@ export async function handleCompletion(
   issueNumber: number,
   config: DeadlineConfig
 ): Promise<void> {
-  // In a real implementation, we'd look up stored deadline metadata
-  // from the issue comments and compute the reward
+  // Fetch deadline metadata from issue comments
+  const comments = await ctx.octokit.issues.listComments({ owner, repo, issue_number: issueNumber, per_page: 100 });
+  let metadata: DeadlineMetadata | null = null;
+
+  for (const comment of comments.data) {
+    const match = comment.body?.match(/<!-- deadline-metadata (.+?) -->/);
+    if (match) {
+      try {
+        metadata = JSON.parse(match[1]);
+        break;
+      } catch {
+        continue;
+      }
+    }
+  }
+
+  if (!metadata) {
+    ctx.logger.info(`No deadline metadata found for #${issueNumber}, skipping completion handling.`);
+    return;
+  }
+
   const completedAt = new Date();
   const reward = calculateReward(
-    0, // baseTaskValue - would be loaded from metadata
+    metadata.baseTaskValue,
     config.deadlineRewardRatio,
     config.disqualificationEnabled,
-    new Date(), // assignedAt
-    new Date(), // deadline
+    new Date(metadata.assignedAt),
+    new Date(metadata.deadline),
     completedAt
   );
 
