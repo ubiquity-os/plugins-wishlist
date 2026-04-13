@@ -131,7 +131,10 @@ jobs:
     needs: resolve-context
     if: ${{ needs.resolve-context.outputs.should_publish_action_artifact == 'true' }}
     runs-on: ubuntu-latest
-    permissions: write-all
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
     environment: ${{ needs.resolve-context.outputs.artifact_environment }}
 
     steps:
@@ -153,7 +156,10 @@ jobs:
     needs: resolve-context
     if: ${{ needs.resolve-context.outputs.should_run_deno == 'true' }}
     runs-on: ubuntu-latest
-    permissions: write-all
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
     environment: ${{ needs.resolve-context.outputs.deno_environment }}
 
     steps:

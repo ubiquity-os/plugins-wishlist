@@ -31,23 +31,28 @@ export async function runPlugin(context: Context) {
     return;
   }
 
-  // Get existing labels on the repo to find available Time: labels
-  const repoLabels = await octokit.rest.issues.listLabelsForRepo({
-    owner,
-    repo,
-    per_page: 100,
-  });
+  // Get existing labels on the repo to find available Time: labels (paginated)
+  const timeLabelNames: string[] = [];
+  let page = 1;
+  while (true) {
+    const repoLabels = await octokit.rest.issues.listLabelsForRepo({
+      owner,
+      repo,
+      per_page: 100,
+      page,
+    });
+    const matching = repoLabels.data.filter((label) => /^Time:\s*</.test(label.name));
+    timeLabelNames.push(...matching.map((l) => l.name));
+    if (repoLabels.data.length < 100) break;
+    page++;
+  }
 
-  const timeLabels = repoLabels.data.filter((label) => /^Time:\s*</.test(label.name));
+  logger.debug(`Found ${timeLabelNames.length} Time: labels: ${timeLabelNames.join(", ")}`);
 
-  if (timeLabels.length === 0) {
+  if (timeLabelNames.length === 0) {
     logger.info(`No Time: labels found in ${owner}/${repo}, skipping.`);
     return;
   }
-
-  const timeLabelNames = timeLabels.map((l) => l.name);
-
-  logger.debug(`Found ${timeLabelNames.length} Time: labels: ${timeLabelNames.join(", ")}`);
 
   // Estimate time using LLM
   const rawEstimateHours = await estimateTime(context, cleanedBody, timeLabelNames);

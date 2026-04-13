@@ -13,10 +13,32 @@ export async function estimateTime(context: Context, issueBody: string, timeLabe
     return estimateWithClaudeCli(context, prompt);
   }
 
+  if (!config.provider || config.provider === "none") {
+    logger.error(`No provider configured`);
+    return null;
+  }
+
+  // Validate API key before making the call
+  const apiKey = getApiKey(context);
+  if (!apiKey || apiKey === "none") {
+    logger.error(`Missing API key for provider: ${config.provider}`);
+    return null;
+  }
+
   return estimateWithApi(context, prompt);
 }
 
-function buildPrompt(issueBody: string, timeLabels: string[]): string {
+function getApiKey(context: Context): string | null {
+  const { config, env } = context;
+  switch (config.provider) {
+    case "anthropic": return env.ANTHROPIC_API_KEY ?? null;
+    case "openai": return env.OPENAI_API_KEY ?? null;
+    case "xai": return env.XAI_API_KEY ?? null;
+    default: return null;
+  }
+}
+
+function buildPrompt(issueBody: string, _timeLabels: string[]): string {
   return `You are a senior software engineer estimating development time for a GitHub issue.
 
 IMPORTANT INSTRUCTIONS:
@@ -25,8 +47,6 @@ IMPORTANT INSTRUCTIONS:
 - Consider: code complexity, testing requirements, documentation needs, edge cases, review cycles.
 - Output ONLY a single number representing your estimate in decimal hours (e.g., 2.5, 8, 40).
 - Do not include any explanation, units, or other text — just the number.
-
-Available Time labels in this repository: ${timeLabels.join(", ")}
 
 Issue specification:
 ---
@@ -42,10 +62,15 @@ async function estimateWithClaudeCli(context: Context, prompt: string): Promise<
   try {
     const { execFile } = await import("child_process");
     const result = await new Promise<string>((resolve, reject) => {
-      execFile("claude", ["-p", prompt, "--model", context.config.model], { maxBuffer: 1024 * 1024 }, (err, stdout) => {
+      const child = execFile("claude", ["-p", prompt, "--model", context.config.model], { maxBuffer: 1024 * 1024 }, (err, stdout) => {
         if (err) reject(err);
         else resolve(stdout ?? "0");
       });
+      // 30s timeout for CLI calls
+      setTimeout(() => {
+        child.kill();
+        reject(new Error("Claude CLI timed out after 30s"));
+      }, 30_000);
     });
 
     if (!result) {
@@ -81,94 +106,140 @@ async function estimateWithApi(context: Context, prompt: string): Promise<number
 }
 
 async function callAnthropicApi(apiKey: string, model: string, prompt: string, logger: { error: (msg: string) => void }): Promise<number | null> {
-  const response = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model,
-      max_tokens: 64,
-      messages: [{ role: "user", content: prompt }],
-    }),
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30_000);
 
-  if (!response.ok) {
-    const err = await response.text();
-    logger.error(`Anthropic API error: ${response.status} ${err}`);
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: 64,
+        messages: [{ role: "user", content: prompt }],
+      }),
+    });
+
+    if (!response.ok) {
+      const err = await response.text();
+      logger.error(`Anthropic API error: ${response.status} ${err}`);
+      return null;
+    }
+
+    const data = (await response.json()) as { content: Array<{ type: string; text: string }> };
+    const text = data.content?.[0]?.text;
+    if (!text) return null;
+    return parseEstimate(text);
+  } catch (error) {
+    if (controller.signal.aborted) {
+      logger.error("Anthropic API call timed out after 30s");
+    } else {
+      logger.error(`Anthropic API error: ${error}`);
+    }
     return null;
+  } finally {
+    clearTimeout(timeout);
   }
-
-  const data = (await response.json()) as { content: Array<{ type: string; text: string }> };
-  const text = data.content?.[0]?.text;
-  if (!text) return null;
-  return parseEstimate(text);
 }
 
 async function callOpenAiApi(apiKey: string, model: string, prompt: string, logger: { error: (msg: string) => void }): Promise<number | null> {
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model,
-      max_tokens: 64,
-      messages: [{ role: "user", content: prompt }],
-    }),
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30_000);
 
-  if (!response.ok) {
-    const err = await response.text();
-    logger.error(`OpenAI API error: ${response.status} ${err}`);
+  try {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: 64,
+        messages: [{ role: "user", content: prompt }],
+      }),
+    });
+
+    if (!response.ok) {
+      const err = await response.text();
+      logger.error(`OpenAI API error: ${response.status} ${err}`);
+      return null;
+    }
+
+    const data = (await response.json()) as { choices: Array<{ message: { content: string } }> };
+    const text = data.choices?.[0]?.message?.content;
+    if (!text) return null;
+    return parseEstimate(text);
+  } catch (error) {
+    if (controller.signal.aborted) {
+      logger.error("OpenAI API call timed out after 30s");
+    } else {
+      logger.error(`OpenAI API error: ${error}`);
+    }
     return null;
+  } finally {
+    clearTimeout(timeout);
   }
-
-  const data = (await response.json()) as { choices: Array<{ message: { content: string } }> };
-  const text = data.choices?.[0]?.message?.content;
-  if (!text) return null;
-  return parseEstimate(text);
 }
 
 async function callXaiApi(apiKey: string, model: string, prompt: string, logger: { error: (msg: string) => void }): Promise<number | null> {
-  const response = await fetch("https://api.x.ai/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model,
-      max_tokens: 64,
-      messages: [{ role: "user", content: prompt }],
-    }),
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30_000);
 
-  if (!response.ok) {
-    const err = await response.text();
-    logger.error(`xAI API error: ${response.status} ${err}`);
+  try {
+    const response = await fetch("https://api.x.ai/v1/chat/completions", {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: 64,
+        messages: [{ role: "user", content: prompt }],
+      }),
+    });
+
+    if (!response.ok) {
+      const err = await response.text();
+      logger.error(`xAI API error: ${response.status} ${err}`);
+      return null;
+    }
+
+    const data = (await response.json()) as { choices: Array<{ message: { content: string } }> };
+    const text = data.choices?.[0]?.message?.content;
+    if (!text) return null;
+    return parseEstimate(text);
+  } catch (error) {
+    if (controller.signal.aborted) {
+      logger.error("xAI API call timed out after 30s");
+    } else {
+      logger.error(`xAI API error: ${error}`);
+    }
     return null;
+  } finally {
+    clearTimeout(timeout);
   }
-
-  const data = (await response.json()) as { choices: Array<{ message: { content: string } }> };
-  const text = data.choices?.[0]?.message?.content;
-  if (!text) return null;
-  return parseEstimate(text);
 }
 
 /**
  * Parses the LLM output into a number. Handles cases like "8", "8 hours", "About 8.5", etc.
  */
 export function parseEstimate(text: string): number | null {
-  // eslint-disable-next-line sonarjs/null-dereference
-  const match = text.match(/(\d+\.?\d*)/);
-  const captured = match?.[1];
-  if (!captured) return null;
-  const value = parseFloat(captured);
-  if (value > 0 && isFinite(value)) {
+  // Strip common prefixes like "Time: <X Hours>" or quotes
+  const cleaned = text.replace(/Time:\s*<[^>]+>/gi, "").replace(/["']/g, "").trim();
+  // If multiple numbers, reject ambiguous output
+  const numbers = cleaned.match(/\d+\.?\d*/g);
+  if (!numbers || numbers.length !== 1) return null;
+  const value = parseFloat(numbers[0]);
+  if (value > 0 && isFinite(value) && value <= 10000) {
     return value;
   }
   return null;

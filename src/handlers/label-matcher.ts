@@ -44,7 +44,7 @@ export function matchTimeLabel(estimatedHours: number, availableLabels: string[]
  */
 function parseThresholdFromName(labelName: string): number | null {
   // eslint-disable-next-line sonarjs/null-dereference
-  const match = labelName.match(/<(\d+)\s*(Minute|Hour|Day|Week)/i);
+  const match = labelName.match(/<(\d+)\s*(Minute|Minutes|Hour|Hours|Day|Days|Week|Weeks)/i);
   if (!match) return null;
 
   const capturedNum = match[1];
@@ -54,12 +54,16 @@ function parseThresholdFromName(labelName: string): number | null {
   const value = parseInt(capturedNum, 10);
   switch (capturedUnit.toLowerCase()) {
     case "minute":
+    case "minutes":
       return value / 60;
     case "hour":
+    case "hours":
       return value;
     case "day":
+    case "days":
       return value * 8;
     case "week":
+    case "weeks":
       return value * 40;
     default:
       return null;
