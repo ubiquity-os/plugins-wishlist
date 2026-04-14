@@ -7,4 +7,4 @@ This is where proposals can be discussed for new capabilities.
 **Status:** Implemented
 **Bounty:** $75
 
-Protects UbiquityOS configuration files from unauthorized modifications. Only admins and billing managers can modify config files. Unauthorized changes are automatically reverted.
+Protects UbiquityOS configuration files from unauthorized modifications. By default, only admins and billing managers can modify config files (configurable via plugin settings). Unauthorized changes are automatically reverted.
