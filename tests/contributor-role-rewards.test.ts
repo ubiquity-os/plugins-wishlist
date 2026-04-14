@@ -17,7 +17,7 @@ import { describe, expect, it } from "@jest/globals";
 import {
   ContributorClass,
   TargetRole,
-} from "../contributor-rewards-with-config/src/types/plugin-input";
+} from "@plugin-config/src/types/plugin-input";
 import {
   getContributorClass,
   matchesTarget,
@@ -28,8 +28,8 @@ import {
   calculateRewards,
   aggregateRewards,
   ContributorReward,
-} from "../contributor-rewards-with-config/src/handlers/rewards";
-import { PluginSettings } from "../contributor-rewards-with-config/src/types/plugin-input";
+} from "@plugin-config/src/handlers/rewards";
+import { PluginSettings } from "@plugin-config/src/types/plugin-input";
 
 // ============================================================================
 // No Config v1 — reward engine
@@ -39,7 +39,7 @@ import {
   verifyContributorRole,
   ComputeRewardsInput,
   ContributorRewards,
-} from "../proposals/webhook-rewards/src/reward-engine";
+} from "@proposals/webhook-rewards/src/reward-engine";
 
 // ============================================================================
 // #48 Contributor Class Detection
