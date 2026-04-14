@@ -95,7 +95,8 @@ async function postReminder(
       issue_number: issueNumber,
       labels: [hoursUntilDeadlineLabel(message)],
     });
-  } catch {
+  } catch (e) {
+    console.warn("Label operation failed:", e);
     // Label may not exist, non-critical
   }
 }
@@ -127,7 +128,8 @@ async function handleExpiry(ctx: PluginContext, entry: DeadlineEntry, userConfig
       issue_number: issueNumber,
       labels: ["deadline: expired"],
     });
-  } catch {
+  } catch (e) {
+    console.warn("Label operation failed:", e);
     // Non-critical
   }
 }

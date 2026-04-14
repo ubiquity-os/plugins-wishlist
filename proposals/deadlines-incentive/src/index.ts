@@ -71,7 +71,9 @@ function parseDeadlineCommand(body: string): Date | null {
   const match = body.match(/\/deadline\s+(\S+)/);
   if (!match) return null;
   const date = new Date(match[1]);
-  return isNaN(date.getTime()) ? null : date;
+  const parsed = new Date(match[1]);
+    if (isNaN(parsed.getTime()) || parsed.getTime() < Date.now()) return null;
+    return parsed;
 }
 
 /**
@@ -113,7 +115,8 @@ async function applyDeadlineLabels(
   // Ensure label exists
   try {
     await ctx.octokit.issues.getLabel({ owner, repo, name: label });
-  } catch {
+  } catch (e) {
+    console.warn("Label operation failed:", e);
     await ctx.octokit.issues.createLabel({ owner, repo, name: label, color: "ff6b6b" });
   }
 
@@ -166,7 +169,7 @@ export const deadlineHandler: ActionHandler = async (ctx: PluginContext) => {
 /**
  * Extract task value from issue labels (e.g., "Price: 100 USD").
  */
-function extractTaskValue(labels: any[]): number {
+function extractTaskValue(labels: Array<{ name?: string } | string>): number {
   for (const label of labels) {
     const name = typeof label === "string" ? label : label.name || "";
     const match = name.match(/Price:\s*\$?(\d+)/i);
@@ -196,7 +199,8 @@ export async function handleCompletion(
       try {
         metadata = JSON.parse(match[1]);
         break;
-      } catch {
+      } catch (e) {
+    console.warn("Label operation failed:", e);
         continue;
       }
     }
@@ -224,8 +228,6 @@ export async function handleCompletion(
   await ctx.octokit.issues.createComment({ owner, repo, issue_number: issueNumber, body });
 }
 
-// Start the deadline scheduler
-startDeadlineScheduler();
 
 export { checkDeadlines };
 export default deadlineHandler;
