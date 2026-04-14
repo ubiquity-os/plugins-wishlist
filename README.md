@@ -1,6 +1,6 @@
 # Auto Time Label Estimator
 
-A UbiquityOS plugin that automatically estimates development time and sets `Time: ` labels on GitHub issues using LLM analysis.
+A UbiquityOS plugin that automatically estimates development time and sets `Time:` labels on GitHub issues using LLM analysis.
 
 ## Features
 
@@ -16,12 +16,12 @@ A UbiquityOS plugin that automatically estimates development time and sets `Time
 2. Strips any existing `Time: <...>` references from the issue body to remove bias
 3. Sends the cleaned issue content to the configured LLM with estimation instructions
 4. Applies a configurable offset divisor to the raw estimate (accounts for model overestimation)
-5. Matches the adjusted estimate to the best available `Time: ` label in the repository
-6. Removes any existing `Time: ` labels and applies the new one
+5. Matches the adjusted estimate to the best available `Time:` label in the repository
+6. Removes any existing `Time:` labels and applies the new one
 
 ## Supported Time Labels
 
-The plugin matches against the repository's existing `Time: ` labels. Standard labels include:
+The plugin matches against the repository's existing `Time:` labels. Standard labels include:
 
 - `Time: <1 Hour`
 - `Time: <2 Hours`

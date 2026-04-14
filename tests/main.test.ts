@@ -44,4 +44,9 @@ describe("Label Matcher", () => {
     const partialLabels = ["Time: <1 Hour", "Time: <1 Day"];
     expect(matchTimeLabel(5, partialLabels)).toBe("Time: <1 Day");
   });
+
+  it("Should parse plural custom labels", () => {
+    const labels = ["Time: <1 Hour", "Time: <6 Hours", "Time: <1 Day"];
+    expect(matchTimeLabel(5, labels)).toBe("Time: <6 Hours");
+  });
 });

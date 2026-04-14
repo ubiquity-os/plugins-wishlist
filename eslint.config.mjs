@@ -123,12 +123,6 @@ export default defineConfig(
         },
         {
           selector: "variable",
-          format: ["strictCamelCase"],
-          leadingUnderscore: "allow",
-          trailingUnderscore: "allow",
-        },
-        {
-          selector: "variable",
           modifiers: ["destructured"],
           format: null,
         },

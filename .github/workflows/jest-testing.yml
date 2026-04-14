@@ -29,4 +29,9 @@ jobs:
 
       - name: Add Jest Report to Summary
         if: always()
-        run: echo "$(cat test-dashboard.md)" >> $GITHUB_STEP_SUMMARY
+        run: |
+          if [ -f test-dashboard.md ]; then
+            cat test-dashboard.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "test-dashboard.md not found." >> "$GITHUB_STEP_SUMMARY"
+          fi
