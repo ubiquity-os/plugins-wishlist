@@ -39,7 +39,7 @@ Open Issue → Age ≥ staleThreshold?
       Yes → Human activity since reminder?
         Yes → Skip (active discussion)
         No → Close proposal, remove from KV
-```
+```typescript
 
 ## Implementation
 
@@ -69,7 +69,7 @@ plugins:
         warningLabel: "stale-proposal"
         closeOnExpiry: true
         ignoreBotComments: true
-```
+```typescript
 
 ### Key Files
 - `src/handlers/proposal-handler.ts` — Core proposal evaluation and action logic
