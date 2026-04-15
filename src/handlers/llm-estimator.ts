@@ -62,15 +62,16 @@ async function estimateWithClaudeCli(context: Context, prompt: string): Promise<
   try {
     const { execFile } = await import("child_process");
     const result = await new Promise<string>((resolve, reject) => {
-      const child = execFile("claude", ["-p", prompt, "--model", context.config.model], { maxBuffer: 1024 * 1024 }, (err, stdout) => {
-        if (err) reject(err);
-        else resolve(stdout ?? "0");
-      });
-      // 30s timeout for CLI calls
-      setTimeout(() => {
+      const timeoutId = setTimeout(() => {
         child.kill();
         reject(new Error("Claude CLI timed out after 30s"));
       }, 30_000);
+
+      const child = execFile("claude", ["-p", prompt, "--model", context.config.model], { maxBuffer: 1024 * 1024 }, (err, stdout) => {
+        clearTimeout(timeoutId);
+        if (err) reject(err);
+        else resolve(stdout ?? "0");
+      });
     });
 
     if (!result) {
