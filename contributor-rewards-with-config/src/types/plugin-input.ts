@@ -1,3 +1,7 @@
+import { z } from "zod";
+
+export const pluginSettingsSchema = z.record(z.any()).optional();
+
 /**
  * Stub types for testing — mirrors the real plugin-input.ts without @sinclair/typebox dependency.
  * This allows tests to run without the full plugin dependency tree.

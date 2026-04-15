@@ -1,5 +1,5 @@
-import { Context } from "../types";
-import { parseEventName, getEventRewardConfig, calculateRewards, ContributorReward, aggregateRewards } from "../handlers/rewards";
+import { Context } from "./types";
+import { parseEventName, getEventRewardConfig, calculateRewards, ContributorReward, aggregateRewards } from "./handlers/rewards";
 
 /**
  * The main plugin function. Processes webhook events and calculates contributor rewards.
@@ -18,7 +18,8 @@ export async function runPlugin(context: Context) {
   }
 
   // Determine if we're in a pull or issue context
-  const isPullContext = "pull_request" in payload;
+  // GitHub uses payload.issue.pull_request for PR-backed issue events
+  const isPullContext = "pull_request" in payload || ("issue" in payload && payload.issue && "pull_request" in (payload.issue as Record<string, unknown>));
   const contextType = isPullContext ? "pull" : "issue";
 
   // Extract relevant data from payload
@@ -35,15 +36,30 @@ export async function runPlugin(context: Context) {
   // Get labels from the issue/pull
   const labels = (issueOrPull as { labels?: Array<{ name: string }> }).labels || [];
 
-  // For now, compute reward for the sender
-  const contributors = [
-    {
-      login: sender.login,
-      issueAuthor: issueOrPull.user?.login,
-      assignees: issueOrPull.assignees,
-      isOrgMember: false, // Would need API call to determine
-    },
-  ];
+  // Build contributor list from multiple potential targets
+  const contributorSet = new Set<string>();
+  const contributors: Array<{ login: string; issueAuthor?: string; assignees?: Array<{ login: string }>; isOrgMember: boolean }> = [];
+
+  const addContributor = (login: string) => {
+    if (login && !contributorSet.has(login)) {
+      contributorSet.add(login);
+      contributors.push({
+        login,
+        issueAuthor: issueOrPull.user?.login,
+        assignees: issueOrPull.assignees,
+        isOrgMember: false,
+      });
+    }
+  };
+
+  // Sender
+  addContributor(sender.login);
+  // Issue/PR author
+  if (issueOrPull.user?.login) addContributor(issueOrPull.user.login);
+  // Assignees
+  if (issueOrPull.assignees) {
+    for (const a of issueOrPull.assignees) addContributor(a.login);
+  }
 
   const rewards: ContributorReward[] = calculateRewards(config, eventName, contributors, contextType, labels);
 

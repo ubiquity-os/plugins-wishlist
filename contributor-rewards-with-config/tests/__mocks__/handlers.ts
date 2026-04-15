@@ -40,23 +40,25 @@ export const handlers = [
   }),
   // create comment
   http.post("https://api.github.com/repos/:owner/:repo/issues/:issue_number/comments", async ({ params: { issue_number: issueNumber }, request }) => {
-    const { body } = await getValue(request.body);
+    const parsed = await getValue(request.body);
     const id = db.issueComments.count() + 1;
-    const newItem = { id, body, issue_number: Number(issueNumber), user: db.users.getAll()[0] };
+    const newItem = { id, body: parsed.body ?? "", issue_number: Number(issueNumber), user: db.users.getAll()[0] };
     db.issueComments.create(newItem);
     return HttpResponse.json(newItem);
   }),
   // update comment
-  http.patch("https://api.github.com/repos/:owner/:repo/issues/comments/:id", async ({ params: { issue_number: issueNumber }, request }) => {
-    const { body } = await getValue(request.body);
-    const id = db.issueComments.count();
-    const newItem = { id, body, issue_number: Number(issueNumber), user: db.users.getAll()[0] };
-    db.issueComments.update({ where: { id: { equals: id } }, data: newItem });
+  http.patch("https://api.github.com/repos/:owner/:repo/issues/comments/:id", async ({ params: { id }, request }) => {
+    const parsed = await getValue(request.body);
+    const commentId = Number(id);
+    const current = db.issueComments.findFirst({ where: { id: { equals: commentId } } });
+    if (!current) return new HttpResponse(null, { status: 404 });
+    const newItem = { ...current, body: parsed.body ?? current.body };
+    db.issueComments.update({ where: { id: { equals: commentId } }, data: newItem });
     return HttpResponse.json(newItem);
   }),
 ];
 
-async function getValue(body: ReadableStream<Uint8Array> | null) {
+async function getValue(body: ReadableStream<Uint8Array> | null): Promise<{ body?: string }> {
   if (body) {
     const reader = body.getReader();
     const streamResult = await reader.read();
@@ -69,4 +71,5 @@ async function getValue(body: ReadableStream<Uint8Array> | null) {
       }
     }
   }
+  return {};
 }

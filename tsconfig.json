@@ -7,7 +7,7 @@
     "strict": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "types": ["jest"],
+    "types": ["jest", "node"],
     "outDir": "./dist",
     "declaration": false,
     "noEmit": true

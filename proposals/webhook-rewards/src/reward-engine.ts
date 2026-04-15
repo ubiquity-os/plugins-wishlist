@@ -74,7 +74,7 @@ export function computeRewards(input: ComputeRewardsInput): ContributorRewards[]
   for (const [username, eventCount] of contributorCounts.entries()) {
     // In v1, all contributors are treated as qualifying (role check is placeholder)
     const role = "contributor";
-    if (!qualifyingRoles.some((r) => role.includes(r.toLowerCase()))) {
+    if (!qualifyingRoles.some((r) => r.toLowerCase() === role.toLowerCase())) {
       continue;
     }
 

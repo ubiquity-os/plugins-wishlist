@@ -58,14 +58,14 @@ async function fetchTimeline(
   logger: HandleWebhookInput["logger"]
 ): Promise<TimelineEvent[]> {
   try {
-    const response = await octokit.issues.listEventsForTimeline({
+    const data = await (octokit as any).paginate(octokit.issues.listEventsForTimeline, {
       owner,
       repo,
       issue_number: issueNumber,
       per_page: 100,
     });
 
-    return response.data
+    return data
       .filter((evt: any) => evt.event)
       .map((evt: any) => ({
         event: evt.event,
@@ -84,9 +84,11 @@ async function fetchTimeline(
 function extractLinkedPRs(timeline: TimelineEvent[]): number[] {
   const prNumbers = new Set<number>();
   for (const evt of timeline) {
-    // Cross-references that point to PRs will have the PR number embedded
-    // In the actual GitHub API this comes from source.issue.pull_request
-    // For now we do a simple heuristic
+    // Cross-references that point to PRs
+    if (evt.event === "cross-referenced" && (evt as any).source?.issue?.pull_request) {
+      const prNumber = (evt as any).source.issue.number;
+      if (prNumber) prNumbers.add(prNumber);
+    }
   }
   return Array.from(prNumbers);
 }

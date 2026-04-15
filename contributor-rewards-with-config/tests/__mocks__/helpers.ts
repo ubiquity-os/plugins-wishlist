@@ -12,6 +12,12 @@ import usersGet from "./users-get.json" with { type: "json" };
  * Here is where you create issues, commits, pull requests, etc.
  */
 export async function setupTests() {
+  // Reset database state to ensure idempotency
+  db.users.delete({ where: {} });
+  db.issueComments.delete({ where: {} });
+  db.issue.delete({ where: {} });
+  db.repo.delete({ where: {} });
+
   for (const item of usersGet) {
     db.users.create(item);
   }

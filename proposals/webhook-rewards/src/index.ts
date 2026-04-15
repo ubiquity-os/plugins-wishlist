@@ -12,7 +12,7 @@
  */
 
 import { createPlugin } from "@ubiquity-os/plugin-sdk";
-import { manifest } from "../manifest.json";
+import manifest from "../manifest.json" with { type: "json" };
 import { handleWebhookEvent } from "./webhook-handler";
 import { computeRewards, ContributorRewards } from "./reward-engine";
 
@@ -73,7 +73,7 @@ const COUNTED_TIMELINE_EVENTS = [
 /**
  * Main plugin entry point.
  */
-const plugin = createPlugin<PluginContext>(manifest, async (context) => {
+const plugin = createPlugin<PluginContext>(async (context) => {
   const { eventName, payload, octokit, logger } = context;
 
   logger.info(`[webhook-rewards] Received event: ${eventName}`);
@@ -146,7 +146,7 @@ const plugin = createPlugin<PluginContext>(manifest, async (context) => {
   }
 
   logger.info("[webhook-rewards] All reward permits generated");
-});
+}, manifest);
 
 /**
  * Normalize event name for merged PRs.
