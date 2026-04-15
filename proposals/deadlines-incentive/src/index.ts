@@ -128,6 +128,19 @@ async function applyDeadlineLabels(
  */
 export const deadlineHandler: ActionHandler = async (ctx: PluginContext) => {
   const config: DeadlineConfig = { ...DEFAULT_CONFIG, ...(ctx.config?.commandDeadline || {}) };
+
+  // Handle schedule event for deadline checks
+  if (ctx.eventName === "schedule") {
+    await startDeadlineScheduler(ctx);
+    return;
+  }
+
+  // Handle issues.opened event (set default deadline if configured)
+  if (ctx.eventName === "issues" && ctx.payload.action === "opened") {
+    ctx.logger.info("Issues opened event received, no automatic deadline set.");
+    return;
+  }
+
   const { owner, repo, number: issueNumber } = ctx.payload.issue
     ? { owner: ctx.payload.repository.owner.login, repo: ctx.payload.repository.name, number: ctx.payload.issue.number }
     : { owner: "", repo: "", number: 0 };

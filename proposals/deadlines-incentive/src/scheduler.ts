@@ -136,16 +136,12 @@ async function handleExpiry(ctx: PluginContext, entry: DeadlineEntry, userConfig
 
 /**
  * Start the cron-based scheduler.
- * Checks deadlines every 5 minutes.
+ * Invokes checkDeadlines with the provided context.
+ * Should be called from the schedule event handler.
  */
-export function startDeadlineScheduler(): void {
-  const CHECK_INTERVAL = 5 * 60 * 1000; // 5 minutes
-
-  setInterval(() => {
-    // In production, this would invoke checkDeadlines with a proper context
-    // For now, this is a placeholder that demonstrates the scheduling pattern
-    console.log(`[deadline-scheduler] Checking ${activeDeadlines.size} active deadlines...`);
-  }, CHECK_INTERVAL);
+export async function startDeadlineScheduler(ctx: PluginContext): Promise<void> {
+  console.log(`[deadline-scheduler] Checking ${activeDeadlines.size} active deadlines...`);
+  await checkDeadlines(ctx);
 }
 
 export { activeDeadlines };
