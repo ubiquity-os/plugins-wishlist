@@ -47,12 +47,19 @@ export const handlers = [
     return HttpResponse.json(newItem);
   }),
   // update comment
-  http.patch("https://api.github.com/repos/:owner/:repo/issues/comments/:id", async ({ params: { issue_number: issueNumber }, request }) => {
-    const { body } = await getValue(request.body);
-    const id = db.issueComments.count();
-    const newItem = { id, body, issue_number: Number(issueNumber), user: db.users.getAll()[0] };
-    db.issueComments.update({ where: { id: { equals: id } }, data: newItem });
-    return HttpResponse.json(newItem);
+  http.patch("https://api.github.com/repos/:owner/:repo/issues/comments/:id", async ({ params: { id }, request }) => {
+    const payload = await getValue(request.body);
+    if (!payload || typeof payload.body !== "string") {
+      return new HttpResponse(null, { status: 400 });
+    }
+    const commentId = Number(id);
+    const existing = db.issueComments.findFirst({ where: { id: { equals: commentId } } });
+    if (!existing) {
+      return new HttpResponse(null, { status: 404 });
+    }
+    const updated = { ...existing, body: payload.body };
+    db.issueComments.update({ where: { id: { equals: commentId } }, data: updated });
+    return HttpResponse.json(updated);
   }),
 ];
 

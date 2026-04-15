@@ -1,5 +1,5 @@
-import { Context } from "../types";
-import { parseEventName, getEventRewardConfig, calculateRewards, ContributorReward, aggregateRewards } from "../handlers/rewards";
+import { Context } from "./types";
+import { parseEventName, getEventRewardConfig, calculateRewards, ContributorReward, aggregateRewards } from "./handlers/rewards";
 
 /**
  * The main plugin function. Processes webhook events and calculates contributor rewards.
@@ -13,7 +13,7 @@ export async function runPlugin(context: Context) {
   // Check if this event has any reward configuration
   const rewardConfig = getEventRewardConfig(config, eventName);
   if (!rewardConfig) {
-    logger.info(`No reward configuration found for event: ${eventName}`);
+    logger.info `No reward configuration found for event: ${eventName}`);
     return;
   }
 
@@ -71,7 +71,7 @@ export async function runPlugin(context: Context) {
   // Add assignees as potential collaborators
   if (issueOrPull.assignees) {
     for (const assignee of issueOrPull.assignees) {
-      if (assignee.login !== sender.login && assignee.login !== requestedReviewer?.login) {
+      if (assignee.login !== sender.login && assigee.login !== requestedReviewer?.login) {
         contributors.push({
           login: assignee.login,
           issueAuthor: issueOrPull.user?.login === assignee.login,
