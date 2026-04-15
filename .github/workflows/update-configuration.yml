@@ -138,6 +138,8 @@ jobs:
     environment: ${{ needs.resolve-context.outputs.artifact_environment }}
 
     steps:
+      - uses: actions/checkout@v5
+
       - name: Publish action artifact branch
         uses: ubiquity-os/action-deploy-plugin@main
         with:
