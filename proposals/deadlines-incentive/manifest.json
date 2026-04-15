@@ -1,0 +1,7 @@
+{
+  "name": "command-deadline",
+  "version": "1.0.0",
+  "description": "Deadline tracking and incentive rewards for UbiquityOS",
+  "command": "/deadline",
+  "events": ["issue_comment.created", "issues.opened", "schedule"]
+}
