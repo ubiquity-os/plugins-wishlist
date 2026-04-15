@@ -1,0 +1,62 @@
+/**
+ * This is generic and not fully featured, but it is a good
+ * starting point for testing your plugins. Adjust as needed.
+ */
+export default {
+  author_association: "NONE",
+  closed_at: null,
+  comments: 0,
+  comments_url: "",
+  created_at: new Date("2024-01-01T00:00:00.000Z"),
+  events_url: "",
+  html_url: "https://github.com/ubiquity/test-repo/issues/1",
+  id: 1,
+  labels_url: "",
+  locked: false,
+  milestone: null,
+  node_id: "1",
+  owner: "ubiquity",
+  number: 1,
+  repository_url: "https://github.com/ubiquity/test-repo",
+  state: "open",
+  title: "issue",
+  updated_at: new Date("2024-01-01T00:00:00.000Z"),
+  url: "",
+  user: null,
+  repo: "test-repo",
+  labels: [
+    {
+      name: "Price: 25 USD",
+    },
+    {
+      name: "Time: <1 Hour",
+    },
+    {
+      name: "Priority: 1 (Normal)",
+    },
+  ],
+  body: "body",
+  assignee: {
+    login: "",
+    avatar_url: "",
+    email: null,
+    events_url: "",
+    followers_url: "",
+    following_url: "",
+    gists_url: "",
+    gravatar_id: null,
+    html_url: "",
+    id: 1,
+    name: null,
+    node_id: "",
+    organizations_url: "",
+    received_events_url: "",
+    repos_url: "",
+    site_admin: false,
+    starred_at: "",
+    starred_url: "",
+    subscriptions_url: "",
+    type: "",
+    url: "",
+  },
+};
