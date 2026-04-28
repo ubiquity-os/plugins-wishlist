@@ -1,0 +1,10 @@
+{
+  "name": "command-plan",
+  "description": "Breaks issue specs into child GitHub Issues via /plan command",
+  "version": "1.0.0",
+  "author": "zhaog100",
+  "license": "MIT",
+  "commands": ["/plan"],
+  "permissions": ["issues:read", "issues:write", "pull_requests:read"],
+  "repository": "https://github.com/ubiquity-os/plugins-wishlist"
+}
