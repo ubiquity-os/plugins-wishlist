@@ -3,6 +3,10 @@ import { Context } from "../types";
 /**
  * Calls the LLM to estimate the development time for a given issue body.
  * Returns the raw estimate in hours (before offset adjustment), or null on failure.
+ * @param context - The plugin context with config and environment
+ * @param issueBody - The GitHub issue body text
+ * @param timeLabels - Array of time label names to consider
+ * @returns Estimated hours as a number, or null if estimation failed
  */
 export async function estimateTime(context: Context, issueBody: string, timeLabels: string[]): Promise<number | null> {
   const { config } = context;
@@ -28,6 +32,11 @@ export async function estimateTime(context: Context, issueBody: string, timeLabe
   return estimateWithApi(context, prompt);
 }
 
+/**
+ * Retrieves the API key for the configured LLM provider.
+ * @param context - The plugin context with config and environment
+ * @returns The API key string, or null if not configured
+ */
 function getApiKey(context: Context): string | null {
   const { config, env } = context;
   switch (config.provider) {
@@ -38,6 +47,12 @@ function getApiKey(context: Context): string | null {
   }
 }
 
+/**
+ * Builds the prompt for the LLM to estimate development time.
+ * @param issueBody - The GitHub issue body text
+ * @param _timeLabels - Array of time label names (reserved for future use)
+ * @returns The formatted prompt string
+ */
 function buildPrompt(issueBody: string, _timeLabels: string[]): string {
   return `You are a senior software engineer estimating development time for a GitHub issue.
 
@@ -56,6 +71,12 @@ ${issueBody}
 Estimated hours (just the number):`;
 }
 
+/**
+ * Estimates development time using the Claude CLI tool.
+ * @param context - The plugin context with config and logger
+ * @param prompt - The formatted prompt for the LLM
+ * @returns Estimated hours as a number, or null if the call failed
+ */
 async function estimateWithClaudeCli(context: Context, prompt: string): Promise<number | null> {
   const { logger } = context;
 
@@ -86,6 +107,12 @@ async function estimateWithClaudeCli(context: Context, prompt: string): Promise<
   }
 }
 
+/**
+ * Estimates development time using an API-based LLM provider.
+ * @param context - The plugin context with config, logger, and environment
+ * @param prompt - The formatted prompt for the LLM
+ * @returns Estimated hours as a number, or null if the call failed
+ */
 async function estimateWithApi(context: Context, prompt: string): Promise<number | null> {
   const { config, logger, env } = context;
 
@@ -106,6 +133,14 @@ async function estimateWithApi(context: Context, prompt: string): Promise<number
   }
 }
 
+/**
+ * Calls the Anthropic Claude API to get a time estimate.
+ * @param apiKey - The Anthropic API key
+ * @param model - The model name to use
+ * @param prompt - The formatted prompt
+ * @param logger - Logger instance for error reporting
+ * @returns Estimated hours as a number, or null on failure
+ */
 async function callAnthropicApi(apiKey: string, model: string, prompt: string, logger: { error: (msg: string) => void }): Promise<number | null> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 30_000);
@@ -148,6 +183,14 @@ async function callAnthropicApi(apiKey: string, model: string, prompt: string, l
   }
 }
 
+/**
+ * Calls the OpenAI API to get a time estimate.
+ * @param apiKey - The OpenAI API key
+ * @param model - The model name to use
+ * @param prompt - The formatted prompt
+ * @param logger - Logger instance for error reporting
+ * @returns Estimated hours as a number, or null on failure
+ */
 async function callOpenAiApi(apiKey: string, model: string, prompt: string, logger: { error: (msg: string) => void }): Promise<number | null> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 30_000);
@@ -189,6 +232,14 @@ async function callOpenAiApi(apiKey: string, model: string, prompt: string, logg
   }
 }
 
+/**
+ * Calls the xAI API to get a time estimate.
+ * @param apiKey - The xAI API key
+ * @param model - The model name to use
+ * @param prompt - The formatted prompt
+ * @param logger - Logger instance for error reporting
+ * @returns Estimated hours as a number, or null on failure
+ */
 async function callXaiApi(apiKey: string, model: string, prompt: string, logger: { error: (msg: string) => void }): Promise<number | null> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 30_000);
@@ -232,6 +283,8 @@ async function callXaiApi(apiKey: string, model: string, prompt: string, logger:
 
 /**
  * Parses the LLM output into a number. Handles cases like "8", "8 hours", "About 8.5", etc.
+ * @param text - The raw text output from the LLM
+ * @returns Parsed number if valid, or null if parsing failed
  */
 export function parseEstimate(text: string): number | null {
   // Strip common prefixes like "Time: <X Hours>" or quotes
