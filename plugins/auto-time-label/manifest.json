@@ -1,0 +1,14 @@
+{
+  "name": "auto-time-label",
+  "description": "Automatically estimates issue duration using configurable LLM offsets and applies the closest fitting Time label.",
+  "version": "1.0.0",
+  "configuration": {
+    "properties": {
+      "timeOffsetDivisor": {
+        "type": "number",
+        "default": 15,
+        "description": "Divisor applied to raw LLM duration estimate in hours (e.g. 15h / 15 = 1h)."
+      }
+    }
+  }
+}
